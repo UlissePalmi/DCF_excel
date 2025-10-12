@@ -1,8 +1,8 @@
 import xlsxwriter
 import os
 from xlsxwriter.utility import xl_rowcol_to_cell, xl_cell_to_rowcol
-from openpyxl import Workbook 
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side 
+#from openpyxl import Workbook 
+#from openpyxl.styles import Font, PatternFill, Alignment, Border, Side 
 #from openpyxl.worksheet.views import SheetView
 import pandas as pd
 import xslx_setup as xsp
@@ -11,15 +11,14 @@ import math
 first_proj_year = 2025
 company_name = "Amplify Energy Corp."
 schedule_list = ["Oil Revenue"]
-df = pd.DataFrame({
-    "2019": [60, 60, 60, 60, 60],
-    "2020": [62, 62, 62, 62, 62],
-    "2021": [63, 63, 63, 63, 63],
-    "2022": [65, 65, 65, 65, 65],
-    "2023": [66, 66, 66, 66, 66],
-    "2024": [68, 68, 68, 68, 68]
-})
-    
+
+price_oil = pd.read_excel("AMPY_data.xlsx", sheet_name="price_oil")
+volume_oil = pd.read_excel("AMPY_data.xlsx", sheet_name="volume_oil")
+price_ng = pd.read_excel("AMPY_data.xlsx", sheet_name="price_ng")
+volume_ng = pd.read_excel("AMPY_data.xlsx", sheet_name="volume_ng")
+price_ng = pd.read_excel("AMPY_data.xlsx", sheet_name="price_ngl")
+volume_ngl = pd.read_excel("AMPY_data.xlsx", sheet_name="volume_ngl")
+
 # Create the workbook and a worksheet
 wb = xlsxwriter.Workbook(f"pyhton {company_name} DCF.xlsx")
 ws = wb.add_worksheet("Model")
@@ -49,6 +48,7 @@ xsp.center_across_range(ws, "B2", "W2", company_name, fmt_title)
 xsp.center_across_range(ws, "B3", "W3", f"{schedule_list[0]} Schedule", fmt_schedule)
 ws.write_row("B4", [None] * (ord("W") - ord("B") + 1), fmt_border)
 ws.write_row("B15", [None] * (ord("W") - ord("B") + 1), fmt_border2)
+ws.write_row("B22", [None] * (ord("W") - ord("B") + 1), fmt_border2)
 past_yy = [i for i in range(first_proj_year - 6, first_proj_year)]
 future_yy = [i for i in range(first_proj_year, first_proj_year + 10)]
 ws.write_row("H7", past_yy, fmt_year_A)
@@ -56,18 +56,10 @@ ws.write_row("N7", future_yy, fmt_year_E)
 ws.write("B9", "Pricing", fmt_bold)
 ws.write_column("C10", ["Oklahoma", "Bairoil", "Beta", "East Texas/ North Louisiana", "Eagle Ford"])
 
-def write_dataframe(ws, df, start_row, start_col, *, write_index=False, header_format=None, cell_format=None):
-    # Pre-convert to Python types, replace NaN with None
-    values = df.where(df.notna(), 0).to_numpy().tolist()
-    for idx, row_vals in zip(df.index, values):
-        c = start_col
-        if write_index:
-            ws.write(start_row, c, idx, cell_format)
-            c += 1
-        ws.write_row(start_row, c, row_vals, cell_format)
-        start_row += 1
 header_fmt = wb.add_format({"bold": True, "bg_color": "#1D48A5", "border": 1})
-write_dataframe(ws, df, start_row=9, start_col=7, header_format=header_fmt, cell_format=None)
+xsp.write_dataframe(ws, price_oil.iloc[:,1:], start_row=9, start_col=7, header_format=header_fmt, cell_format=None)
+xsp.write_dataframe(ws, volume_oil.iloc[:,1:], start_row=16, start_col=7, header_format=header_fmt, cell_format=None)
+xsp.write_dataframe(ws, price_oil.iloc[:,1:]*volume_oil.iloc[:,1:], start_row=23, start_col=7, header_format=header_fmt, cell_format=None)
 
 wb.close()
 os.startfile(f"pyhton {company_name} DCF.xlsx")

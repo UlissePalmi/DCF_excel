@@ -1,8 +1,8 @@
 import xlsxwriter
 import os
 from xlsxwriter.utility import xl_rowcol_to_cell, xl_cell_to_rowcol
-from openpyxl import Workbook 
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side 
+#from openpyxl import Workbook 
+#from openpyxl.styles import Font, PatternFill, Alignment, Border, Side 
 #from openpyxl.worksheet.views import SheetView
 import pandas as pd
 import math
@@ -33,7 +33,7 @@ def center_across_range(ws, first_cell, last_cell, text, fmt):
     for c in range(c1 + 1, c2 + 1):
         ws.write_blank(r1, c, None, fmt)
 
-
+'''
 def write_dataframe(ws, df, start_row, start_col, *, write_index=False, header_format=None, cell_format=None):
     """
     Write a pandas DataFrame to an XlsxWriter worksheet without using ExcelWriter.
@@ -60,3 +60,15 @@ def write_dataframe(ws, df, start_row, start_col, *, write_index=False, header_f
             c += 1
         ws.write_row(r, c, row_vals, cell_format)
         r += 1
+'''
+
+def write_dataframe(ws, df, start_row, start_col, *, write_index=False, header_format=None, cell_format=None):
+    # Pre-convert to Python types, replace NaN with None
+    values = df.where(df.notna(), 0).to_numpy().tolist()
+    for idx, row_vals in zip(df.index, values):
+        c = start_col
+        if write_index:
+            ws.write(start_row, c, idx, cell_format)
+            c += 1
+        ws.write_row(start_row, c, row_vals, cell_format)
+        start_row += 1
