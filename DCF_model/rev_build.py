@@ -28,6 +28,7 @@ fmt_year_A = wb.add_format({"num_format": '0"A"', "bold": True})
 fmt_year_E = wb.add_format({"num_format": '0"E"', "bold": True})
 fmt_bold  = wb.add_format({"bold": True})
 fmt_border  = wb.add_format({"bottom": 2})
+fmt_border1  = wb.add_format({"bottom": 1})
 fmt_border2  = wb.add_format({"bottom": 7})
 fmt_title = wb.add_format({
     "align":  "center_across",   # key setting
@@ -49,6 +50,8 @@ xsp.center_across_range(ws, "B3", "W3", f"{schedule_list[0]} Schedule", fmt_sche
 ws.write_row("B4", [None] * (ord("W") - ord("B") + 1), fmt_border)
 ws.write_row("B15", [None] * (ord("W") - ord("B") + 1), fmt_border2)
 ws.write_row("B22", [None] * (ord("W") - ord("B") + 1), fmt_border2)
+ws.write_row("B29", [None] * (ord("W") - ord("B") + 1), fmt_border1)
+ws.write_row("N6", [None] * (ord("W") - ord("N") + 1), fmt_border1)
 past_yy = [i for i in range(first_proj_year - 6, first_proj_year)]
 future_yy = [i for i in range(first_proj_year, first_proj_year + 10)]
 ws.write_row("H7", past_yy, fmt_year_A)
@@ -59,7 +62,35 @@ ws.write_column("C10", ["Oklahoma", "Bairoil", "Beta", "East Texas/ North Louisi
 header_fmt = wb.add_format({"bold": True, "bg_color": "#1D48A5", "border": 1})
 xsp.write_dataframe(ws, price_oil.iloc[:,1:], start_row=9, start_col=7, header_format=header_fmt, cell_format=None)
 xsp.write_dataframe(ws, volume_oil.iloc[:,1:], start_row=16, start_col=7, header_format=header_fmt, cell_format=None)
-xsp.write_dataframe(ws, price_oil.iloc[:,1:]*volume_oil.iloc[:,1:], start_row=23, start_col=7, header_format=header_fmt, cell_format=None)
+
+prices = price_oil.iloc[:, 1:]
+vols   = volume_oil.iloc[:, 1:]
+
+price_start_row = 9
+price_start_col = 7
+volume_start_row = 16
+volume_start_col = 7
+product_start_row = 23
+product_start_col = 7
+
+nrows, ncols = prices.shape
+
+for r in range(nrows):
+    for c in range(ncols):
+        # Cells where the *inputs* live
+        price_cell = xl_rowcol_to_cell(price_start_row + r,  price_start_col  + c)
+        vol_cell   = xl_rowcol_to_cell(volume_start_row + r, volume_start_col + c)
+
+        formula = f"={price_cell}*{vol_cell}"
+
+        # Cell where the *formula* goes
+        ws.write_formula(
+            product_start_row + r,
+            product_start_col + c,
+            formula,
+        )
+
+
 
 wb.close()
 os.startfile(f"pyhton {company_name} DCF.xlsx")
