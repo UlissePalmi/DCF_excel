@@ -126,8 +126,11 @@ class ExcelExporter:
         # Separator row – medium bottom border (written as blanks)
         f["sep"] = wb.add_format({"bottom": 2})
 
+        # Closing border row at the bottom of each schedule (B:V)
+        f["end"] = wb.add_format({"bottom": 1})
+
         # "Projected" label above year headers
-        f["proj_hdr"] = wb.add_format({**base, "bold": True, "align": "center"})
+        f["proj_hdr"] = wb.add_format({**base, "bold": True, "align": "center_across"})
 
         # Year headers: 2020A (historical) and 2025E (projected)
         f["yr_hist"] = wb.add_format({
@@ -203,7 +206,7 @@ class ExcelExporter:
 
         # ⑤ "Projected" label above the projected year headers
         ws.set_row(row, 12.75)
-        ws.write(row, COL_PROJ_0, "Projected", fmts["proj_hdr"])
+        _center_across(ws, row, COL_PROJ_0, COL_DATA_END, "Projected", fmts["proj_hdr"])
         row += 1
 
         # ⑥ Year header row
@@ -238,5 +241,15 @@ class ExcelExporter:
                             fmts[f"{prefix}_{fmt_key}"],
                         )
             row += 1
+
+        # Closing border row – medium bottom border from col B to col V
+        ws.set_row(row, 12.75)
+        for c in range(COL_B, COL_DATA_END + 1):
+            ws.write_blank(row, c, None, fmts["end"])
+        row += 1
+
+        # Extra empty row between schedules
+        ws.set_row(row, 12.75)
+        row += 1
 
         return row
