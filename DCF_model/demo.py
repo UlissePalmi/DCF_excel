@@ -33,24 +33,24 @@ def print_table(title: str, data: dict[int, float], indent=2):
 
 def main():
     # Default: try Excel first, fall back to CSV
-    filepath = None
-    candidates = [
-        "/mnt/user-data/uploads/YPF_DCF__1_.xlsx",
-        "model_data.csv",
-        "../model_data.csv",
-    ]
-    for c in candidates:
-        if os.path.exists(c):
-            filepath = c
-            break
+    if len(sys.argv) > 1:
+        filepath = sys.argv[1]
+    else:
+        filepath = None
+        candidates = [
+            "/mnt/user-data/uploads/YPF_DCF__1_.xlsx",
+            "model_data.csv",
+            "../model_data.csv",
+        ]
+        for c in candidates:
+            if os.path.exists(c):
+                filepath = c
+                break
 
     if filepath is None:
         print("ERROR: No data file found. Provide a path as argument.")
         print("Usage: python demo.py [path/to/YPF_DCF.xlsx]")
         sys.exit(1)
-
-    if len(sys.argv) > 1:
-        filepath = sys.argv[1]
 
     print(f"Loading model from: {filepath}")
     model = YPFModel(filepath)
