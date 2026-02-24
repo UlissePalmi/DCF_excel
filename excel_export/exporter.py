@@ -11,7 +11,8 @@ Replicates the layout of the source YPF DCF.xlsx "Model" sheet:
 
 import xlsxwriter
 
-COMPANY_NAME = "Yacimientos Petrolíferos Fiscales S.A."
+COMPANY_NAME  = "Yacimientos Petrolíferos Fiscales S.A."
+COMPANY_SHORT = "YPF"   # used for the output filename
 ALL_YEARS    = list(range(2020, 2035))
 HIST_YEARS   = set(range(2020, 2025))   # 2020-2024 – blue font, "A" suffix
 N_YEARS      = len(ALL_YEARS)           # 15
@@ -51,6 +52,17 @@ def _flatten(data: dict, depth: int = 0):
         elif isinstance(val, dict):
             yield depth, label, None
             yield from _flatten(val, depth + 1)
+
+
+def _center_across(ws, row: int, col_start: int, col_end: int, text, fmt):
+    """
+    Write text in col_start and blanks through col_end, all with the same
+    center_across format.  This is the only way to make center_across span
+    reliably all the way to col_end in xlsxwriter (mirrors old_code technique).
+    """
+    ws.write(row, col_start, text, fmt)
+    for c in range(col_start + 1, col_end + 1):
+        ws.write_blank(row, c, None, fmt)
 
 
 def _num_fmt_key(label: str, series: dict) -> str:
@@ -155,16 +167,14 @@ class ExcelExporter:
     # ── Column widths ────────────────────────────────────────────────────────
 
     def _setup_columns(self, ws):
-        ws.set_column(COL_A,     COL_A,     3.71)
-        ws.set_column(COL_B,     COL_B,     1.71)
-        ws.set_column(COL_LABEL, COL_LABEL, 40.0)
-        ws.set_column(COL_D,     COL_D,     11.71)
-        ws.set_column(COL_E,     COL_E,     14.29)
-        ws.set_column(COL_UNIT,  COL_UNIT,  10.43)
-        ws.set_column(COL_G,     COL_G,     1.71)
-        ws.set_column(COL_DATA_0, COL_DATA_0, 9.71)
-        for c in range(COL_DATA_0 + 1, COL_DATA_END + 1):
-            ws.set_column(c, c, 13.0)
+        ws.set_column(COL_A,     COL_A,     3)
+        ws.set_column(COL_B,     COL_B,     1)
+        ws.set_column(COL_LABEL, COL_LABEL, 1)
+        ws.set_column(COL_D,     COL_D,     11)
+        ws.set_column(COL_E,     COL_E,     13.5)
+        ws.set_column(COL_UNIT,  COL_UNIT,  9.75)
+        ws.set_column(COL_G,     COL_G,     1)
+        ws.set_column(COL_DATA_0, COL_DATA_END, 8.5)
 
     # ── Schedule writer ──────────────────────────────────────────────────────
 
@@ -176,12 +186,12 @@ class ExcelExporter:
         row += 1
 
         # ② Company title row (18 pt tall)
-        ws.write(row, COL_LABEL, COMPANY_NAME, fmts["company"])
+        _center_across(ws, row, COL_LABEL, COL_DATA_END, COMPANY_NAME, fmts["company"])
         ws.set_row(row, 23.25)
         row += 1
 
         # ③ Schedule title row (18.75 pt tall)
-        ws.write(row, COL_LABEL, schedule.SCHEDULE_NAME, fmts["sched"])
+        _center_across(ws, row, COL_LABEL, COL_DATA_END, schedule.SCHEDULE_NAME, fmts["sched"])
         ws.set_row(row, 18.75)
         row += 1
 
