@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Demo script – loads the YPF Model from CSV or Excel and prints key outputs.
+Demo script – loads the DUOL DCF Model from a CapIQ .xls export and prints key outputs.
 """
 
 import sys
@@ -9,7 +9,6 @@ import os
 # Allow running from this directory or parent
 sys.path.insert(0, os.path.dirname(__file__))
 
-from data_loader import DataLoader
 from ypf_model import YPFModel
 
 
@@ -32,24 +31,24 @@ def print_table(title: str, data: dict[int, float], indent=2):
 
 
 def main():
-    # Default: try Excel first, fall back to CSV
+    # Default: look for the DUOL CapIQ file relative to the project root
     if len(sys.argv) > 1:
         filepath = sys.argv[1]
     else:
+        script_dir = os.path.dirname(__file__)
         filepath = None
         candidates = [
-            "/mnt/user-data/uploads/YPF_DCF__1_.xlsx",
-            "model_data.csv",
-            "../model_data.csv",
+            os.path.join(script_dir, "..", "Duolingo Inc NasdaqGS DUOL Financials.xls"),
+            "Duolingo Inc NasdaqGS DUOL Financials.xls",
         ]
         for c in candidates:
             if os.path.exists(c):
-                filepath = c
+                filepath = os.path.normpath(c)
                 break
 
     if filepath is None:
         print("ERROR: No data file found. Provide a path as argument.")
-        print("Usage: python demo.py [path/to/YPF_DCF.xlsx]")
+        print("Usage: python demo.py [path/to/DUOL_Financials.xls]")
         sys.exit(1)
 
     print(f"Loading model from: {filepath}")
@@ -94,13 +93,11 @@ def main():
     print_table("Investing CF", model.cash_flow.investing["total"])
     print_table("Ending Cash", model.cash_flow.cash_position["ending"])
 
-    # ── Oil Revenue ──
+    # ── Revenue (DUOL has no oil revenue; schedule kept but data is empty) ──
     print("\n" + "=" * 80)
-    print("OIL REVENUE SCHEDULE")
+    print("REVENUE SCHEDULES  (oil/crude/downstream: no data for DUOL)")
     print("=" * 80)
-    print_table("Oil Price ($/Boe)", model.oil_revenue.pricing["oil_and_consolidates"])
-    print_table("Total Volume (MMBoe)", model.oil_revenue.volumes["total"])
-    print_table("Total Revenue ($)", model.oil_revenue.revenue["total"])
+    print_table("Total Revenue", model.total_revenue.total_revenue)
 
     # ── Debt ──
     print("\n" + "=" * 80)
@@ -117,7 +114,7 @@ def main():
     print_table("Net Working Capital", model.working_capital.net_working_capital)
     print_table("Change in WC", model.working_capital.change_in_working_capital)
 
-    print("\n\nDone. All 14 schedules loaded successfully.")
+    print("\n\nDone. All 14 schedules loaded (DUOL CapIQ data; YPF-specific schedules have no data).")
 
 
 if __name__ == "__main__":

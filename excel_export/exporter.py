@@ -11,13 +11,13 @@ Replicates the layout of the source YPF DCF.xlsx "Model" sheet:
 
 import xlsxwriter
 
-COMPANY_NAME  = "Yacimientos Petrolíferos Fiscales S.A."
-COMPANY_SHORT = "YPF"   # used for the output filename
-ALL_YEARS    = list(range(2020, 2035))
-HIST_YEARS   = set(range(2020, 2025))   # 2020-2024 – blue font, "A" suffix
-N_YEARS      = len(ALL_YEARS)           # 15
+COMPANY_NAME  = "Duolingo, Inc."
+COMPANY_SHORT = "DUOL"   # used for the output filename
+ALL_YEARS    = list(range(2019, 2026))  # 2019-2025 (all actuals from CapIQ)
+HIST_YEARS   = set(ALL_YEARS)           # all years are historical actuals
+N_YEARS      = len(ALL_YEARS)           # 7
 
-# Column indices (0-based) matching source Excel cols A-V
+# Column indices (0-based)
 COL_A        = 0   # A: narrow sentinel  (width 3.71)
 COL_B        = 1   # B: spacer           (width 1.71)
 COL_LABEL    = 2   # C: main label       (width 40)
@@ -25,12 +25,12 @@ COL_D        = 3   # D: sub-label        (width 11.71, blank in output)
 COL_E        = 4   # E: unused           (width 14.29)
 COL_UNIT     = 5   # F: unit label       (width 10.43, blank for now)
 COL_G        = 6   # G: pre-data spacer  (width 1.71)
-COL_DATA_0   = 7   # H: year 2020        (width 9.71)
-COL_DATA_END = 21  # V: year 2034        (width 13.0)
+COL_DATA_0   = 7   # H: first data year  (width 9.71)
+COL_DATA_END = COL_DATA_0 + N_YEARS - 1  # last data year column
 
-# First column index of projected years (2025 = 5 historical years in)
-_N_HIST     = len([y for y in ALL_YEARS if y in HIST_YEARS])
-COL_PROJ_0  = COL_DATA_0 + _N_HIST  # col M (index 12)
+# No projected years for DUOL (all actuals), so COL_PROJ_0 is past data end
+_N_HIST     = N_YEARS
+COL_PROJ_0  = COL_DATA_END + 1  # sentinel: past the last data column
 
 
 def _is_series(val) -> bool:
@@ -89,6 +89,8 @@ class ExcelExporter:
     def __init__(self, model, output_path: str):
         self.model = model
         self.output_path = output_path
+        self.company_name = getattr(model.loader, "company_name", None) or COMPANY_NAME
+        self.ticker = getattr(model.loader, "ticker", None) or COMPANY_SHORT
 
     def export(self) -> str:
         wb = xlsxwriter.Workbook(self.output_path)
@@ -189,7 +191,7 @@ class ExcelExporter:
         row += 1
 
         # ② Company title row (18 pt tall)
-        _center_across(ws, row, COL_LABEL, COL_DATA_END, COMPANY_NAME, fmts["company"])
+        _center_across(ws, row, COL_LABEL, COL_DATA_END, self.company_name, fmts["company"])
         ws.set_row(row, 23.25)
         row += 1
 
@@ -204,9 +206,10 @@ class ExcelExporter:
             ws.write_blank(row, c, None, fmts["sep"])
         row += 1
 
-        # ⑤ "Projected" label above the projected year headers
+        # ⑤ "Projected" label above the projected year headers (skip if none)
         ws.set_row(row, 12.75)
-        _center_across(ws, row, COL_PROJ_0, COL_DATA_END, "Projected", fmts["proj_hdr"])
+        if COL_PROJ_0 <= COL_DATA_END:
+            _center_across(ws, row, COL_PROJ_0, COL_DATA_END, "Projected", fmts["proj_hdr"])
         row += 1
 
         # ⑥ Year header row

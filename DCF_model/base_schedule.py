@@ -2,21 +2,23 @@
 Base schedule class that all individual schedule classes inherit from.
 """
 
-from multi_sheet_loader import MultiSheetLoader
+from loaders.capiq_loader import CapIQLoader
 
 
 class BaseSchedule:
     """
-    Base class for all schedules in the YPF DCF Model.
+    Base class for all schedules in the DCF Model.
 
     Each subclass defines SHEET_NAME and calls self._field(key) to retrieve
-    {year: value} series from the corresponding sheet in the MultiSheetLoader.
+    {year: value} series. The loader must implement field(sheet_name, key)
+    and expose ALL_YEARS / HISTORICAL_YEARS / PROJECTED_YEARS.
+    Currently backed by CapIQLoader (DUOL CapitalIQ data).
     """
 
     SCHEDULE_NAME: str = "Base Schedule"
     SHEET_NAME: str = ""   # set in each subclass (usually == SCHEDULE_NAME)
 
-    def __init__(self, loader: MultiSheetLoader):
+    def __init__(self, loader: CapIQLoader):
         self.loader = loader
         self.years = loader.ALL_YEARS
         self.historical_years = loader.HISTORICAL_YEARS

@@ -1,12 +1,12 @@
 """
-YPF DCF Model – Top-level orchestrator.
+DUOL DCF Model - Top-level orchestrator.
 
-Instantiate with a path to the Model sheet data (CSV or Excel).
+Instantiate with a path to the S&P Capital IQ .xls export for Duolingo.
 Provides access to every schedule as a named attribute.
 
 Usage:
     from ypf_model import YPFModel
-    model = YPFModel("YPF_DCF.xlsx")
+    model = YPFModel("Duolingo Inc NasdaqGS DUOL Financials.xls")
 
     # Access any schedule
     print(model.income_statement.line_items["ebitda"])
@@ -14,9 +14,12 @@ Usage:
 
     # Get a full summary dict of every schedule
     full = model.summary()
+
+Note: schedules with no DUOL equivalent (oil revenue, crude products, etc.)
+are kept in the model but return empty dicts for all their fields.
 """
 
-from data_loader import DataLoader
+from loaders.capiq_loader import CapIQLoader
 from schedules import (
     OilRevenueSchedule,
     CrudeProductsRevenueSchedule,
@@ -43,7 +46,7 @@ class YPFModel:
     """
 
     def __init__(self, filepath: str):
-        self.loader = DataLoader(filepath)
+        self.loader = CapIQLoader(filepath)
 
         # ── Revenue schedules ──
         self.oil_revenue = OilRevenueSchedule(self.loader)

@@ -3,11 +3,11 @@ YPF DCF Model Package
 
 Usage:
     from ypf_model import YPFModel
-    model = YPFModel("path/to/YPF_DCF.xlsx")   # or .csv
+    model = YPFModel("Duolingo Inc NasdaqGS DUOL Financials.xls")
 """
 
 from .ypf_model import YPFModel
-from .data_loader import DataLoader
+from .loaders.capiq_loader import CapIQLoader
 from .base_schedule import BaseSchedule
 from .schedules import (
     OilRevenueSchedule,
@@ -28,7 +28,7 @@ from .schedules import (
 
 __all__ = [
     "YPFModel",
-    "DataLoader",
+    "CapIQLoader",
     "BaseSchedule",
     "OilRevenueSchedule",
     "CrudeProductsRevenueSchedule",

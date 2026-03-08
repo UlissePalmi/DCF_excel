@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/Scripts/pip install xlrd -q)",
+      "Bash(.venv/Scripts/python.exe -c \":*)",
+      "Bash(.venv/Scripts/python.exe -m pip install xlrd -q)",
+      "Bash(.venv/Scripts/python.exe -c \"import xlrd; print\\(''xlrd available''\\)\")",
+      "Bash(python3 -m pip install xlrd -q)",
+      "Bash(python3 -c \":*)",
+      "Bash(PYTHON=\"/c/Users/upalmier/AppData/Roaming/uv/python/cpython-3.12.11-windows-x86_64-none/python.exe\")",
+      "Bash($PYTHON -m pip install xlrd -q)",
+      "Bash($PYTHON -c \":*)",
+      "Bash(PYTHON=\"/c/Users/upalmier/AppData/Local/Temp/gefXIfaV/Scripts/python.exe\")",
+      "Bash(/c/Users/upalmier/.local/bin/uv.exe add xlrd)",
+      "Bash(.venv/Scripts/python.exe DCF_model/demo.py)",
+      "Bash(.venv/Scripts/python.exe excel_export/run.py)",
+      "Bash(.venv/Scripts/python.exe excel_export/run.py \"Duolingo Inc NasdaqGS DUOL Financials.xls\")",
+      "Bash(.venv/Scripts/python.exe excel_export/run.py \"c:/Users/upalmier/Documents/DCF_excel/Duolingo Inc NasdaqGS DUOL Financials.xls\")"
+    ]
+  }
+}
