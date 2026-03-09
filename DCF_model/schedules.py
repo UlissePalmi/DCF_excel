@@ -205,63 +205,13 @@ class TotalRevenueSchedule(BaseSchedule):
     SHEET_NAME    = "Total Revenue Schedule"
 
     @property
-    def natural_gas(self):
-        return {
-            "price":  {"domestic": self._field("price_ng_domestic"),
-                       "export":   self._field("price_ng_export")},
-            "volume": {"domestic": self._field("vol_ng_domestic"),
-                       "export":   self._field("vol_ng_export"),
-                       "total":    self._field("vol_ng_total")},
-            "revenue":{"domestic": self._field("rev_ng_domestic"),
-                       "export":   self._field("rev_ng_export"),
-                       "total":    self._field("rev_ng_total")},
-        }
-
-    @property
-    def crude_oil(self):
-        return {
-            "price":  {"domestic": self._field("price_crude_domestic"),
-                       "export":   self._field("price_crude_export")},
-            "volume": {"domestic": self._field("vol_crude_domestic"),
-                       "export":   self._field("vol_crude_export"),
-                       "total":    self._field("vol_crude_total")},
-            "revenue":{"domestic": self._field("rev_crude_domestic"),
-                       "export":   self._field("rev_crude_export"),
-                       "total":    self._field("rev_crude_total")},
-        }
-
-    @property
-    def argentina_gdp(self): return self._field("argentina_gdp")
-
-    @property
-    def revenue_components(self):
-        return {
-            "main_crude_products": self._field("rev_component_main_crude_products"),
-            "other_products":      self._field("rev_component_other_products"),
-            "downstream":          self._field("rev_component_downstream"),
-        }
-
-    @property
-    def other_revenue(self):
-        return {
-            "gas_stations":        self._field("other_rev_gas_stations"),
-            "construction_contracts": self._field("other_rev_construction_contracts"),
-            "lng_regasification":  self._field("other_rev_lng_regasification"),
-            "other_goods_services":self._field("other_rev_other_goods_services"),
-            "subtotal":            self._field("other_rev_subtotal"),
-        }
-
-    @property
-    def total_revenue(self): return self._field("total_revenue")
+    def total_revenue(self) -> dict[int, float]:
+        """Total revenue across all sources."""
+        return self._field("total_revenue")
 
     def summary(self) -> dict:
         return {
-            "natural_gas":        self.natural_gas,
-            "crude_oil":          self.crude_oil,
-            "argentina_gdp":      self.argentina_gdp,
-            "revenue_components": self.revenue_components,
-            "other_revenue":      self.other_revenue,
-            "total_revenue":      self.total_revenue,
+            "total_revenue": self.total_revenue,
         }
 
 

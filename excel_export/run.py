@@ -18,7 +18,7 @@ _ROOT = os.path.join(_HERE, "..")
 sys.path.insert(0, os.path.join(_ROOT, "DCF_model"))
 sys.path.insert(0, _HERE)
 
-from ypf_model import YPFModel
+from model.schedule_builder import ScheduleBuilder
 from exporter import ExcelExporter
 
 
@@ -48,7 +48,7 @@ def main():
 
     print(f"Data file:    {data_file}")
 
-    model = YPFModel(data_file)
+    model = ScheduleBuilder(data_file)
     print(model)
 
     ticker = model.loader.ticker or "DCF"

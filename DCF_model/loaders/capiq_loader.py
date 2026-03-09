@@ -13,7 +13,7 @@ import xlrd
 
 
 HISTORICAL_YEARS = [2019, 2020, 2021, 2022, 2023, 2024, 2025]
-PROJECTED_YEARS: list[int] = [2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034]
+PROJECTED_YEARS: list[int] = [2026, 2027, 2028, 2029, 2030, 2031, 2032]
 ALL_YEARS = HISTORICAL_YEARS + PROJECTED_YEARS
 
 
@@ -141,9 +141,7 @@ class CapIQLoader:
 
     # ── Lookup helpers ────────────────────────────────────────────────────────
 
-    def _raw_series(
-        self, sheet: str, label: str, scale: float = 1.0
-    ) -> dict[int, float]:
+    def _raw_series(self, sheet: str, label: str, scale: float = 1.0) -> dict[int, float]:
         """Return a raw {year: value} series, applying an optional unit scale."""
         series = self._raw.get(sheet, {}).get(label, {})
         if scale == 1.0:

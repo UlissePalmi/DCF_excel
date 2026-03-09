@@ -1,21 +1,23 @@
 """
-Excel exporter for the YPF DCF Model.
+Excel exporter for the DCF Model.
 
-Replicates the layout of the source YPF DCF.xlsx "Model" sheet:
-- Calibri font, no background fills
+Replicates the layout of the source YPF DCF.xlsx workbook:
+- Multiple sheets: Cover, Summary, Model
 - Per-schedule header block: company name / schedule title / separator
 - Year headers formatted as "2020A" (historical) and "2025E" (projected)
-- Historical data cells (2020-2024) rendered in blue font
-- Column structure mirrors the source: A-G are spacers/labels, H-V are data
+- Historical data cells rendered in blue font
+- Column structure: A-G are spacers/labels, H-V are data
 """
 
-import xlsxwriter
+import sys
+import os
 
-COMPANY_NAME  = "Duolingo, Inc."
-COMPANY_SHORT = "DUOL"   # used for the output filename
-ALL_YEARS    = list(range(2019, 2026))  # 2019-2025 (all actuals from CapIQ)
-HIST_YEARS   = set(ALL_YEARS)           # all years are historical actuals
-N_YEARS      = len(ALL_YEARS)           # 7
+# Add DCF_model to path for sheet builders
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'DCF_model'))
+
+import xlsxwriter
+from sheets import CoverSheetBuilder, SummarySheetBuilder
+from sheets.layout_config import LayoutConfig
 
 # Column indices (0-based)
 COL_A        = 0   # A: narrow sentinel  (width 3.71)
@@ -26,11 +28,6 @@ COL_E        = 4   # E: unused           (width 14.29)
 COL_UNIT     = 5   # F: unit label       (width 10.43, blank for now)
 COL_G        = 6   # G: pre-data spacer  (width 1.71)
 COL_DATA_0   = 7   # H: first data year  (width 9.71)
-COL_DATA_END = COL_DATA_0 + N_YEARS - 1  # last data year column
-
-# No projected years for DUOL (all actuals), so COL_PROJ_0 is past data end
-_N_HIST     = N_YEARS
-COL_PROJ_0  = COL_DATA_END + 1  # sentinel: past the last data column
 
 
 def _is_series(val) -> bool:
@@ -81,7 +78,7 @@ def _num_fmt_key(label: str, series: dict) -> str:
 
 
 class ExcelExporter:
-    """Exports a YPFModel to a single-sheet formatted Excel file."""
+    """Exports a ScheduleBuilder model to a single-sheet formatted Excel file."""
 
     _C_HIST_FONT = "#0000FF"   # blue – historical hard-coded input cells
     _C_FONT      = "Calibri"
@@ -89,16 +86,31 @@ class ExcelExporter:
     def __init__(self, model, output_path: str):
         self.model = model
         self.output_path = output_path
-        self.company_name = getattr(model.loader, "company_name", None) or COMPANY_NAME
-        self.ticker = getattr(model.loader, "ticker", None) or COMPANY_SHORT
+        self.company_name = getattr(model.loader, "company_name", None)
+        self.ticker = getattr(model.loader, "ticker", None)
+
+        # Derive year lists from loader
+        self.all_years = model.loader.ALL_YEARS
+        self.hist_years = set(model.loader.HISTORICAL_YEARS)
+        self.n_years = len(self.all_years)
+        self.col_data_end = COL_DATA_0 + self.n_years - 1
+        self.col_proj_0 = min(
+            COL_DATA_0 + len(model.loader.HISTORICAL_YEARS),
+            self.col_data_end + 1
+        )
 
     def export(self) -> str:
         wb = xlsxwriter.Workbook(self.output_path)
+
+        # Build supplementary sheets first (Cover, Summary)
+        CoverSheetBuilder(wb, self.company_name, self.ticker).build()
+        SummarySheetBuilder(wb, self.company_name, self.all_years).build()
+
+        # Build Model sheet
         ws = wb.add_worksheet("Model")
-        ws.hide_gridlines(2)
+        LayoutConfig.apply_to_sheet(ws, hide_gridlines=True, column_count=self.col_data_end + 1)
 
         fmts = self._make_formats(wb)
-        self._setup_columns(ws)
 
         row = 0
         for schedule in self.model.all_schedules:
@@ -169,18 +181,6 @@ class ExcelExporter:
 
         return f
 
-    # ── Column widths ────────────────────────────────────────────────────────
-
-    def _setup_columns(self, ws):
-        ws.set_column(COL_A,     COL_A,     3)
-        ws.set_column(COL_B,     COL_B,     1)
-        ws.set_column(COL_LABEL, COL_LABEL, 1)
-        ws.set_column(COL_D,     COL_D,     11)
-        ws.set_column(COL_E,     COL_E,     13.5)
-        ws.set_column(COL_UNIT,  COL_UNIT,  9.75)
-        ws.set_column(COL_G,     COL_G,     1)
-        ws.set_column(COL_DATA_0, COL_DATA_END, 8.5)
-
     # ── Schedule writer ──────────────────────────────────────────────────────
 
     def _write_schedule(self, ws, fmts, schedule, start_row: int) -> int:
@@ -191,31 +191,31 @@ class ExcelExporter:
         row += 1
 
         # ② Company title row (18 pt tall)
-        _center_across(ws, row, COL_LABEL, COL_DATA_END, self.company_name, fmts["company"])
+        _center_across(ws, row, COL_LABEL, self.col_data_end, self.company_name, fmts["company"])
         ws.set_row(row, 23.25)
         row += 1
 
         # ③ Schedule title row (18.75 pt tall)
-        _center_across(ws, row, COL_LABEL, COL_DATA_END, schedule.SCHEDULE_NAME, fmts["sched"])
+        _center_across(ws, row, COL_LABEL, self.col_data_end, schedule.SCHEDULE_NAME, fmts["sched"])
         ws.set_row(row, 18.75)
         row += 1
 
         # ④ Separator row – 3 pt, medium bottom border across label + data cols
         ws.set_row(row, 3)
-        for c in range(COL_LABEL, COL_DATA_END + 1):
+        for c in range(COL_LABEL, self.col_data_end + 1):
             ws.write_blank(row, c, None, fmts["sep"])
         row += 1
 
         # ⑤ "Projected" label above the projected year headers (skip if none)
         ws.set_row(row, 12.75)
-        if COL_PROJ_0 <= COL_DATA_END:
-            _center_across(ws, row, COL_PROJ_0, COL_DATA_END, "Projected", fmts["proj_hdr"])
+        if self.col_proj_0 <= self.col_data_end:
+            _center_across(ws, row, self.col_proj_0, self.col_data_end, "Projected", fmts["proj_hdr"])
         row += 1
 
         # ⑥ Year header row
         ws.set_row(row, 12.75)
-        for i, year in enumerate(ALL_YEARS):
-            key = "yr_hist" if year in HIST_YEARS else "yr_proj"
+        for i, year in enumerate(self.all_years):
+            key = "yr_hist" if year in self.hist_years else "yr_proj"
             ws.write_number(row, COL_DATA_0 + i, year, fmts[key])
         row += 1
 
@@ -235,10 +235,10 @@ class ExcelExporter:
                 d = min(depth, 3)
                 ws.write(row, COL_LABEL, label, fmts[f"lbl{d}"])
                 fmt_key = _num_fmt_key(label, series)
-                for i, year in enumerate(ALL_YEARS):
+                for i, year in enumerate(self.all_years):
                     v = series.get(year)
                     if v is not None and isinstance(v, (int, float)):
-                        prefix = "hist" if year in HIST_YEARS else "proj"
+                        prefix = "hist" if year in self.hist_years else "proj"
                         ws.write_number(
                             row, COL_DATA_0 + i, float(v),
                             fmts[f"{prefix}_{fmt_key}"],
@@ -247,7 +247,7 @@ class ExcelExporter:
 
         # Closing border row – medium bottom border from col B to col V
         ws.set_row(row, 12.75)
-        for c in range(COL_B, COL_DATA_END + 1):
+        for c in range(COL_B, self.col_data_end + 1):
             ws.write_blank(row, c, None, fmts["end"])
         row += 1
 

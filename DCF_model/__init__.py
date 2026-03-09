@@ -1,12 +1,12 @@
 """
-YPF DCF Model Package
+DCF Model Package
 
 Usage:
-    from ypf_model import YPFModel
-    model = YPFModel("Duolingo Inc NasdaqGS DUOL Financials.xls")
+    from model.schedule_builder import ScheduleBuilder
+    model = ScheduleBuilder("Duolingo Inc NasdaqGS DUOL Financials.xls")
 """
 
-from .ypf_model import YPFModel
+from .model import ScheduleBuilder, IndustryType, get_industry_type
 from .loaders.capiq_loader import CapIQLoader
 from .base_schedule import BaseSchedule
 from .schedules import (
@@ -16,7 +16,6 @@ from .schedules import (
     DownstreamRevenueSchedule,
     TotalRevenueSchedule,
     ProductionCostsSchedule,
-    SellingAndAdminExpensesSchedule,
     IncomeStatement,
     CashFlowStatement,
     BalanceSheet,
@@ -27,7 +26,9 @@ from .schedules import (
 )
 
 __all__ = [
-    "YPFModel",
+    "ScheduleBuilder",
+    "IndustryType",
+    "get_industry_type",
     "CapIQLoader",
     "BaseSchedule",
     "OilRevenueSchedule",
@@ -36,7 +37,6 @@ __all__ = [
     "DownstreamRevenueSchedule",
     "TotalRevenueSchedule",
     "ProductionCostsSchedule",
-    "SellingAndAdminExpensesSchedule",
     "IncomeStatement",
     "CashFlowStatement",
     "BalanceSheet",
