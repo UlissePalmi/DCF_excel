@@ -71,98 +71,99 @@ class SummarySheetBuilder:
         NAVY = '002F6C'
 
         self.fmt_title = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 18, 'bold': True,
+            'font_size': 18, 'bold': True,
             'align': 'center_across'
         })
 
         self.fmt_subtitle = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 14, 'bold': True,
+            'font_size': 14, 'bold': True,
             'align': 'center_across'
         })
 
         self.fmt_section = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 10, 'bold': True
+            'font_size': 10, 'bold': True,
+            'align': 'center_across'
         })
 
         self.fmt_hdr_white = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 10, 'bold': True,
+            'font_size': 10, 'bold': True,
             'font_color': 'FFFFFF', 'bg_color': NAVY, 'align': 'vcenter'
         })
 
         self.fmt_hdr_white_center = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 10, 'bold': True,
+            'font_size': 10, 'bold': True,
             'font_color': 'FFFFFF', 'bg_color': NAVY, 'align': 'center_across'
         })
 
         self.fmt_hdr_white_year = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 10, 'bold': True,
+            'font_size': 10, 'bold': True,
             'font_color': 'FFFFFF', 'bg_color': NAVY, 'align': 'vcenter',
             'num_format': FMT_YEAR
         })
 
         self.fmt_label = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 10
+            'font_size': 10
         })
 
         self.fmt_sub_label = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 9
+            'font_size': 9
         })
 
         self.fmt_sub_lbl8 = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 8
+            'font_size': 8
         })
 
         self.fmt_navy = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 10, 'font_color': NAVY
+            'font_size': 10, 'font_color': NAVY
         })
 
         self.fmt_navy_dollar = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 10, 'font_color': NAVY,
+            'font_size': 10, 'font_color': NAVY,
             'num_format': FMT_DOLLAR
         })
 
         self.fmt_navy_pct = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 10, 'font_color': NAVY,
+            'font_size': 10, 'font_color': NAVY,
             'num_format': FMT_PCT_S
         })
 
         self.fmt_navy_dec1 = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 10, 'font_color': NAVY,
+            'font_size': 10, 'font_color': NAVY,
             'num_format': FMT_DEC1
         })
 
         self.fmt_navy_dec2 = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 10, 'font_color': NAVY,
+            'font_size': 10, 'font_color': NAVY,
             'num_format': FMT_DEC2
         })
 
         self.fmt_navy_shares = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 10, 'font_color': NAVY,
+            'font_size': 10, 'font_color': NAVY,
             'num_format': FMT_SHARES
         })
 
         self.fmt_navy9 = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 9, 'font_color': NAVY
+            'font_size': 9, 'font_color': NAVY
         })
 
         self.fmt_navy9_pct = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 9, 'font_color': NAVY,
+            'font_size': 9, 'font_color': NAVY,
             'num_format': FMT_PCT
         })
 
         self.fmt_impl_white = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 10, 'bold': True,
+            'font_size': 10, 'bold': True,
             'font_color': 'FFFFFF', 'bg_color': NAVY
         })
 
         self.fmt_impl_white_dollar2 = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 10, 'bold': True,
+            'font_size': 10, 'bold': True,
             'font_color': 'FFFFFF', 'bg_color': NAVY,
             'num_format': FMT_DOLLAR2
         })
 
         self.fmt_impl_dark = self.workbook.add_format({
-            'font_name': 'Arial', 'font_size': 10, 'bold': True,
+            'font_size': 10, 'bold': True,
             'font_color': '404040'
         })
 
@@ -194,6 +195,8 @@ class SummarySheetBuilder:
             self.ws.write(2, col, '', self.fmt_border)
 
         self.ws.write('C5', 'SUMMARY VALUES - BASE CASE', self.fmt_section)
+        for col in range(3, 25):  # D to Y (columns 4-25, indices 3-24)
+            self.ws.write(4, col, '', self.fmt_section)
 
         # Projected header - center across K to T
         self.ws.write('K6', 'Projected', self.fmt_hdr_white_center)
