@@ -16,7 +16,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'DCF_model'))
 
 import xlsxwriter
-from sheets import CoverSheetBuilder, SummarySheetBuilder
+from sheets import CoverSheetBuilder, SummarySheetBuilder, AssumptionsSheetBuilder
 from sheets.layout_config import LayoutConfig
 
 # Column indices (0-based)
@@ -83,11 +83,12 @@ class ExcelExporter:
     _C_HIST_FONT = "#0000FF"   # blue – historical hard-coded input cells
     _C_FONT      = "Calibri"
 
-    def __init__(self, model, output_path: str):
+    def __init__(self, model, output_path: str, num_projected_years: int = 0):
         self.model = model
         self.output_path = output_path
         self.company_name = getattr(model.loader, "company_name", None)
         self.ticker = getattr(model.loader, "ticker", None)
+        self.num_projected_years = num_projected_years
 
         # Derive year lists from loader
         self.all_years = model.loader.ALL_YEARS
@@ -102,9 +103,10 @@ class ExcelExporter:
     def export(self) -> str:
         wb = xlsxwriter.Workbook(self.output_path)
 
-        # Build supplementary sheets first (Cover, Summary)
+        # Build supplementary sheets first (Cover, Summary, Assumptions)
         CoverSheetBuilder(wb, self.company_name, self.ticker).build()
-        SummarySheetBuilder(wb, self.company_name, self.all_years).build()
+        SummarySheetBuilder(wb, self.company_name, self.all_years, self.num_projected_years).build()
+        AssumptionsSheetBuilder(wb).build()
 
         # Build Model sheet
         ws = wb.add_worksheet("Model")
