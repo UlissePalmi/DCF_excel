@@ -18,16 +18,6 @@ def create_summary_formats(workbook):
     """
     formats = {}
 
-    # Title and section formats
-    formats['fmt_title'] = workbook.add_format({
-        'font_size': 18, 'bold': True,
-        'align': 'center_across'
-    })
-
-    formats['fmt_subtitle'] = workbook.add_format({
-        'font_size': 14, 'bold': True,
-        'align': 'center_across'
-    })
 
     formats['fmt_section'] = workbook.add_format({
         'font_size': 10, 'bold': True,
@@ -39,7 +29,7 @@ def create_summary_formats(workbook):
     })
 
     # Header formats
-    formats['fmt_hdr_white_center_top'] = workbook.add_format({
+    formats['fmt_projected'] = workbook.add_format({
         'font_size': 10, 'bold': True, 'italic': True,
         'align': 'center_across', 'bottom': 1, 'top': 1
     })
@@ -68,7 +58,6 @@ def create_summary_formats(workbook):
     })
 
     # Border formats for the outside box
-    formats['fmt_border'] = workbook.add_format({'bottom': 2})
     formats['fmt_border_thin'] = workbook.add_format({'bottom': 1})
     formats['fmt_border_top'] = workbook.add_format({'top': 1})
     formats['fmt_border_bottom'] = workbook.add_format({'bottom': 1})

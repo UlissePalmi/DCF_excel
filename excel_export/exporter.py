@@ -83,15 +83,15 @@ class ExcelExporter:
     _C_HIST_FONT = "#0000FF"   # blue – historical hard-coded input cells
     _C_FONT      = "Calibri"
 
-    def __init__(self, model, output_path: str, num_projected_years: int = 0):
+    def __init__(self, model, output_path: str):
         self.model = model
         self.output_path = output_path
         self.company_name = getattr(model.loader, "company_name", None)
         self.ticker = getattr(model.loader, "ticker", None)
-        self.num_projected_years = num_projected_years
 
         # Derive year lists from loader
         self.all_years = model.loader.ALL_YEARS
+        self.num_projected_years = len(model.loader.PROJECTED_YEARS)
         self.hist_years = set(model.loader.HISTORICAL_YEARS)
         self.n_years = len(self.all_years)
         self.col_data_end = COL_DATA_0 + self.n_years - 1

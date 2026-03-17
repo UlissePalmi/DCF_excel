@@ -43,19 +43,10 @@ def main():
     else:
         data_file = find_data_file()
 
-    # Optional: get number of projected years (default 0)
-    num_projected_years = 0
-    if len(sys.argv) > 2:
-        try:
-            num_projected_years = int(sys.argv[2])
-        except ValueError:
-            print(f"Warning: Could not parse projected years '{sys.argv[2]}', using default 0")
-
     out_dir = os.path.join(_ROOT, "finished_models")
     os.makedirs(out_dir, exist_ok=True)
 
     print(f"Data file:    {data_file}")
-    print(f"Projected years: {num_projected_years}")
 
     model = ScheduleBuilder(data_file)
     print(model)
@@ -66,7 +57,7 @@ def main():
     print(f"Ticker:       {ticker}")
     print(f"Exporting to: {output_file} ...")
 
-    ExcelExporter(model, output_file, num_projected_years).export()
+    ExcelExporter(model, output_file).export()
     print("Done.")
 
 

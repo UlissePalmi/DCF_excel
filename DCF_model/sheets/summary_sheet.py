@@ -12,6 +12,11 @@ RIGHT_COLS = ['AH', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 
 PROJ_L = ['K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T']
 PROJ_R = ['AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT']
 
+# Fixed columns before the projected years in the header span (B through the last non-projected col)
+# col_end = HEADER_FIXED_COLS + num_projected_years  →  with 10 proj years: 15 + 10 = 25 (col Z)
+HEADER_COL_START = 1   # col B
+HEADER_FIXED_COLS = 15
+
 
 class SummarySheetBuilder:
     """Builds a formatted Summary sheet with model highlights."""
@@ -74,12 +79,12 @@ class SummarySheetBuilder:
         """
         return write_header(
             self.ws,
+            self.workbook,
             self.company_name,
             subtitle,
             start_row=start_row,
-            fmt_title=self.fmt_title,
-            fmt_subtitle=self.fmt_subtitle,
-            fmt_border=self.fmt_border
+            col_start=HEADER_COL_START,
+            col_end=HEADER_FIXED_COLS + len(PROJ_L),
         ) + 1  # +1 for blank gap after header
 
     def _write_content(self, start_row, section_title) -> int:
@@ -107,9 +112,9 @@ class SummarySheetBuilder:
             self.ws.write(start_row, col, '', self.fmt_section)
 
         # Projected header - center across K to T with top border
-        self.ws.write(start_row + 1, 10, 'Projected', self.fmt_hdr_white_center_top)
+        self.ws.write(start_row + 1, 10, 'Projected', self.fmt_projected)
         for col in range(11, 20):  # L to T (columns 11-19)
-            self.ws.write(start_row + 1, col, '', self.fmt_hdr_white_center_top)
+            self.ws.write(start_row + 1, col, '', self.fmt_projected)
 
         # Column headers (year headers row, using dynamic row calculation)
         year_row = start_row + 3  # 1-based Excel row number for year headers
@@ -129,9 +134,9 @@ class SummarySheetBuilder:
             formula = f'={prev_col_letter}{year_row}+1'
             self.ws.write(start_row + 2, col, formula, self.fmt_label_border)
 
-        # Dotted border separators (H to T) - at rows 14, 19, 24, 29, 34, 37
-        # Offsets from start_row: 10, 15, 20, 25, 30, 33
-        for offset in [10, 15, 20, 25, 30, 33]:
+        # Dotted border separators (H to T)
+        # Offsets from start_row: 9, 14, 19, 24, 29, 32
+        for offset in [9, 14, 19, 24, 29, 32]:
             for col in range(7, 20):  # H to T (columns 7-19)
                 self.ws.write_blank(start_row + offset, col, None, self.fmt_dashed_border)
 
