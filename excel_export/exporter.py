@@ -81,22 +81,23 @@ class ExcelExporter:
     """Exports a ScheduleBuilder model to a single-sheet formatted Excel file."""
 
     _C_HIST_FONT = "#0000FF"   # blue – historical hard-coded input cells
-    _C_FONT      = "Calibri"
 
     def __init__(self, model, output_path: str):
+        from loaders.model_config import get_all_years, get_historical_years
+
         self.model = model
         self.output_path = output_path
         self.company_name = getattr(model.loader, "company_name", None)
         self.ticker = getattr(model.loader, "ticker", None)
 
-        # Derive year lists from loader
-        self.all_years = model.loader.ALL_YEARS
-        self.num_projected_years = len(model.loader.PROJECTED_YEARS)
-        self.hist_years = set(model.loader.HISTORICAL_YEARS)
+        # Derive year lists from config helpers
+        self.all_years = get_all_years()
+        self.num_projected_years = model.loader.PROJECTED_YEARS
+        self.hist_years = set(get_historical_years())
         self.n_years = len(self.all_years)
         self.col_data_end = COL_DATA_0 + self.n_years - 1
         self.col_proj_0 = min(
-            COL_DATA_0 + len(model.loader.HISTORICAL_YEARS),
+            COL_DATA_0 + model.loader.HISTORICAL_YEARS,
             self.col_data_end + 1
         )
 
@@ -105,7 +106,7 @@ class ExcelExporter:
 
         # Build supplementary sheets first (Cover, Summary, Assumptions)
         CoverSheetBuilder(wb, self.company_name, self.ticker).build()
-        SummarySheetBuilder(wb, self.company_name, self.all_years, self.num_projected_years).build()
+        SummarySheetBuilder(wb, self.company_name, self.num_projected_years).build()
         AssumptionsSheetBuilder(wb).build()
 
         # Build Model sheet
@@ -124,7 +125,7 @@ class ExcelExporter:
     # ── Format factory ──────────────────────────────────────────────────────
 
     def _make_formats(self, wb) -> dict:
-        base = {"font_name": self._C_FONT, "font_size": 11}
+        base = {"font_size": 11}
         f = {}
 
         # Company name – Calibri 18, bold, center-across

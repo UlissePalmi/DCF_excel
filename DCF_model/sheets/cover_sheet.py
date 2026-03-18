@@ -49,7 +49,6 @@ class CoverSheetBuilder:
         })
 
         fmt_date = self.workbook.add_format({
-            "font_name": "Calibri",
             "font_size": 11,
             "bold": True,
             "num_format": "mm/dd/yyyy",
@@ -57,7 +56,6 @@ class CoverSheetBuilder:
         })
 
         fmt_text = self.workbook.add_format({
-            "font_name": "Calibri",
             "font_size": 11,
         })
 

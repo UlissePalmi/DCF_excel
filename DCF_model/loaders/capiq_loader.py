@@ -10,11 +10,7 @@ schedules whose data is unavailable stay intact but simply show no values.
 
 import re
 import xlrd
-
-
-HISTORICAL_YEARS = [2019, 2020, 2021, 2022, 2023, 2024, 2025]
-PROJECTED_YEARS: list[int] = [2026, 2027, 2028, 2029, 2030, 2031, 2032]
-ALL_YEARS = HISTORICAL_YEARS + PROJECTED_YEARS
+from .model_config import HISTORICAL_YEARS, PROJECTED_YEARS
 
 
 def _extract_year(v) -> int | None:
@@ -38,7 +34,7 @@ class CapIQLoader:
 
     HISTORICAL_YEARS = HISTORICAL_YEARS
     PROJECTED_YEARS  = PROJECTED_YEARS
-    ALL_YEARS        = ALL_YEARS
+    ALL_YEARS = HISTORICAL_YEARS + PROJECTED_YEARS
 
     def __init__(self, filepath: str):
         self.filepath = filepath
@@ -115,7 +111,9 @@ class CapIQLoader:
         # Balance Sheet uses Excel date serial numbers — fall back to canonical list
         if not years:
             count = sum(1 for v in year_row[1:] if v not in ("", None, 0, "-"))
-            years = HISTORICAL_YEARS[:count]
+            # Generate year list starting from 2019 - HISTORICAL_YEARS count backwards
+            start_year = 2019
+            years = list(range(start_year, start_year + count))
 
         # Parse data rows (skip Currency / Units header rows and blanks)
         skip_labels = {"Currency", "Units", ""}
