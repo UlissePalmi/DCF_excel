@@ -6,6 +6,20 @@ keeping format definitions separate from sheet layout and data logic.
 """
 
 
+def index_to_column(idx: int) -> str:
+    """Convert 0-based column index to Excel column letter(s).
+
+    Examples: 0='A', 25='Z', 26='AA', 27='AB', etc.
+    """
+    result = ""
+    idx += 1  # Convert to 1-based
+    while idx > 0:
+        idx -= 1
+        result = chr(ord('A') + (idx % 26)) + result
+        idx //= 26
+    return result
+
+
 def create_summary_formats(workbook):
     """
     Create all format objects for the Summary sheet.
@@ -118,13 +132,15 @@ def write_summary_content(builder, start_row: int, start_col: int, end_proj: int
     ws.write(start_row + 27, end_proj + 1, 'Shares (MM)', builder.fmt_label)
     ws.write(start_row + 31, end_proj + 1, 'Implied Shared Price', builder.fmt_impl_white)
 
-def draw_border_box(builder, start_row: int, start_col: int, end_proj: int) -> None:
+def draw_border_box(builder, start_row: int, start_col: int, end_proj: int, draw_closing_border: bool = True) -> None:
     """Draw the border box around the content section.
 
     Args:
         builder: SummarySheetBuilder instance with ws and format attributes
         start_row: Starting row index (0-based)
         start_col: Starting column index (0-based, where B=1)
+        end_proj: Column index where projected data ends
+        draw_closing_border: Whether to draw the closing border row (default True)
     """
     ws = builder.ws
 
@@ -156,6 +172,42 @@ def draw_border_box(builder, start_row: int, start_col: int, end_proj: int) -> N
     for col in range(start_col + 2, end_proj + 4):
         ws.write(start_row + 37, col, '', builder.fmt_border_bottom)
 
-    # Closing border row
-    for col in range(start_col, end_proj + 6):
-        ws.write(start_row + 38, col, '', builder.fmt_border_thin)
+    # Closing border row (only for left-side content)
+    if draw_closing_border:
+        for col in range(start_col, end_proj + 6):
+            ws.write(start_row + 38, col, '', builder.fmt_border_thin)
+
+
+def write_year_headers(builder, start_row: int, start_col: int, end_proj: int) -> None:
+    """Write year header row with historical and projected year formulas.
+
+    Args:
+        builder: SummarySheetBuilder instance with ws and format attributes
+        start_row: Starting row index (0-based)
+        start_col: Starting column index (0-based, where B=1)
+        end_proj: Column index where projected data ends
+    """
+    ws = builder.ws
+    year_row = start_row + 3  # 1-based Excel row number for year headers
+
+    # Fixed left section headers
+    ws.write(start_row + 2, start_col + 2, '($ Millions)', builder.fmt_hdr_white_border)
+    ws.write(start_row + 2, start_col + 3, '', builder.fmt_label_border)
+    ws.write(start_row + 2, start_col + 4, 'Trend', builder.fmt_hdr_white_border)
+    ws.write(start_row + 2, start_col + 5, '', builder.fmt_label_border)
+
+    # Historical years (first 3 data columns): each references next column - 1
+    for col_idx in range(start_col + 6, start_col + 9):
+        # Column at col_idx references next column (col_idx + 1) with -1
+        next_col_letter = index_to_column(col_idx + 1)
+        formula = f'={next_col_letter}{year_row}-1'
+        ws.write(start_row + 2, col_idx, formula, builder.fmt_label_border)
+
+    # First projected year (4th data column): references assumptions
+    ws.write(start_row + 2, start_col + 9, '=Assumptions!A1', builder.fmt_label_border)
+
+    # Remaining projected years: each references previous column + 1
+    for col_idx in range(start_col + 10, end_proj):
+        prev_col_letter = index_to_column(col_idx - 1)
+        formula = f'={prev_col_letter}{year_row}+1'
+        ws.write(start_row + 2, col_idx, formula, builder.fmt_label_border)

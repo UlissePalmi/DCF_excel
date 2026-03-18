@@ -3,13 +3,8 @@ Summary sheet builder - creates key metrics summary page.
 """
 
 import xlsxwriter
-from .summary_formats import create_summary_formats, draw_border_box, write_summary_content
+from .summary_formats import create_summary_formats, draw_border_box, write_summary_content, write_year_headers, index_to_column
 from structures.structures import write_header
-
-# Fixed columns before the projected years in the header span (B through the last non-projected col)
-# col_end = HEADER_FIXED_COLS + num_projected_years  →  with 10 proj years: 15 + 10 = 25 (col Z)
-HEADER_COL_START = 1   # col B
-HEADER_FIXED_COLS = 15
 
 class SummarySheetBuilder:
     """Builds a formatted Summary sheet with model highlights."""
@@ -19,42 +14,6 @@ class SummarySheetBuilder:
         self.company_name = company_name
         self.num_projected_years = num_projected_years
         self.ws = None
-        self._calculate_columns()
-
-    def _calculate_columns(self) -> None:
-        """Generate dynamic column ranges based on num_projected_years."""
-        HIST_YEARS = 3
-        total_data_cols = HIST_YEARS + self.num_projected_years
-
-        # Data columns start at H (index 7)
-        self.data_start_idx = 7
-
-        # Generate LEFT_COLS dynamically (e.g., H, I, J, ... T)
-        self.LEFT_COLS = [chr(ord('A') + i) for i in range(self.data_start_idx, self.data_start_idx + total_data_cols)]
-
-        # Projected columns skip the first 3 historical years
-        self.PROJ_L = self.LEFT_COLS[HIST_YEARS:]
-
-        # Right side is offset by 26 columns (one alphabet)
-        right_offset = 26
-        self.RIGHT_COLS = [chr(ord('A') + self.data_start_idx + right_offset + i) for i in range(total_data_cols)]
-        self.PROJ_R = self.RIGHT_COLS[HIST_YEARS:]
-
-    @property
-    def data_end_idx(self) -> int:
-        """Index of the last data column."""
-        return self.data_start_idx + len(self.LEFT_COLS) - 1
-
-    @property
-    def right_start_idx(self) -> int:
-        """Index of the first fixed right column (after data)."""
-        return self.data_end_idx + 1
-
-    @property
-    def right_end_idx(self) -> int:
-        """Index of the last fixed right column."""
-        return self.right_start_idx + 4  # 5 columns: U-Y
-
 
     def build(self) -> None:
         """Create and populate the Summary sheet with 3 header/content pairs."""
@@ -64,10 +23,15 @@ class SummarySheetBuilder:
         self._load_formats()
 
         row = 0
+        # Calculate right-side start column (1 column after left content ends)
+        start_col_left = 1
+        start_col_right = start_col_left + self.num_projected_years + 16
 
-        # First header/content pair
+        # First header/content pair (Base Case - with side-by-side layout)
         row = self._write_header(start_row=row, subtitle='Base Case DCF')
-        row = self._write_content(start_row=row, section_title='BASE CASE')
+        self._write_content(start_row=row, section_title='BASE CASE', start_col=start_col_left, adj_col_widths=True)
+        self._write_content(start_row=row, section_title='linked', start_col=start_col_right, adj_col_widths=True)
+        row += 40
 
         # Second header/content pair
         row = self._write_header(start_row=row, subtitle='Best Case DCF')
@@ -79,27 +43,8 @@ class SummarySheetBuilder:
 
     def _setup_layout(self) -> None:
         """Apply custom column widths based on dynamic column layout."""
-        col_widths = {
-            'A': 2,      # Outer left spacing
-            'B': 4,      # Outer left spacing
-            'C': 1,      # Left border
-            'D': 1,
-            'E': 20,
-            'G': 1,
-        }
-
-        # Add right side fixed columns (5 columns after data)
-        data_end_col = self.LEFT_COLS[-1]
-        data_end_idx = ord(data_end_col) - ord('A')
-
-        right_cols = [chr(ord('A') + data_end_idx + 1 + i) for i in range(5)]
-        col_widths[right_cols[0]] = 1  # U equivalent
-        col_widths[right_cols[1]] = 10  # V equivalent
-        col_widths[right_cols[4]] = 1  # Y equivalent (5th column)
-
-        for col, width in col_widths.items():
-            self.ws.set_column(col + ':' + col, width)
-
+        # Set column A width (hardcoded, applies to entire sheet)
+        self.ws.set_column('A:A', 2)
 
     def _load_formats(self) -> None:
         """Load format objects from summary_formats module."""
@@ -107,13 +52,13 @@ class SummarySheetBuilder:
         for name, fmt in formats.items():
             setattr(self, name, fmt)
 
-    def _write_header(self, start_row: int = 0, subtitle: str = 'Base Case DCF') -> int:
+    def _write_header(self, start_row: int, subtitle: str) -> int:
         """
         Write header section (3 rows: title, subtitle, border).
 
         Args:
             start_row: Starting row index (0-based)
-            subtitle: Subtitle text to display (default: 'Base Case DCF')
+            subtitle: Subtitle text to display
 
         Returns:
             Next available row index
@@ -124,11 +69,11 @@ class SummarySheetBuilder:
             self.company_name,
             subtitle,
             start_row=start_row,
-            col_start=HEADER_COL_START,
+            col_start=1,
             col_end= self.num_projected_years + 15,
-        ) + 1  # +1 for blank gap after header
+        ) + 1
 
-    def _write_content(self, start_row, section_title, start_col: int = 1) -> int:
+    def _write_content(self, start_row, section_title, start_col: int = 1, adj_col_widths: bool = False) -> int:
         """
         Write content section (rows starting at start_row).
 
@@ -136,11 +81,31 @@ class SummarySheetBuilder:
             start_row: Starting row index (0-based). Should be 4 (row 5) or later.
             section_title: Title text for the section header
             start_col: Starting column index (default 1 = column B)
+            adjust_column_widths: Whether to adjust column widths (default False)
 
         Returns:
             Next available row index
         """
         end_proj = start_col + self.num_projected_years + 9
+
+        # Adjust column widths (only for initial calls)
+        if adj_col_widths:
+            col_widths = {}
+            # Set column widths based on start_col
+            col_widths[index_to_column(start_col)] = 4      # B equivalent (or offset from start_col)
+            col_widths[index_to_column(start_col + 1)] = 1  # C equivalent
+            col_widths[index_to_column(start_col + 2)] = 1  # D equivalent
+            col_widths[index_to_column(start_col + 3)] = 20  # E equivalent
+            col_widths[index_to_column(start_col + 5)] = 1  # G equivalent
+
+            # Right side columns based on end_proj
+            right_cols = [index_to_column(end_proj + i) for i in range(5)]
+            col_widths[right_cols[0]] = 1   # U equivalent
+            col_widths[right_cols[1]] = 10  # V equivalent
+            col_widths[right_cols[4]] = 1   # Y equivalent (5th column)
+
+            for col, width in col_widths.items():
+                self.ws.set_column(col + ':' + col, width)
 
         # Set row heights for content section
         row_heights_offsets = {
@@ -155,31 +120,9 @@ class SummarySheetBuilder:
         for col in range(start_col + 2, end_proj + 5):
             self.ws.write(start_row, col, '', self.fmt_section)
 
-        
-        # Column headers (year headers row, using dynamic row calculation)
-        year_row = start_row + 3  # 1-based Excel row number for year headers
 
-        # Fixed left section headers
-        self.ws.write(start_row + 2, start_col + 2, '($ Millions)', self.fmt_hdr_white_border)
-        self.ws.write(start_row + 2, start_col + 3, '', self.fmt_label_border)
-        self.ws.write(start_row + 2, start_col + 4, 'Trend', self.fmt_hdr_white_border)
-        self.ws.write(start_row + 2, start_col + 5, '', self.fmt_label_border)
-
-        # Historical years (first 3 data columns): each references next column - 1
-        for i, col_idx in enumerate(range(start_col + 6, start_col + 9)):
-            # Column at i references column at i+1 with -1
-            next_col_letter = self.LEFT_COLS[i + 1]
-            formula = f'={next_col_letter}{year_row}-1'
-            self.ws.write(start_row + 2, col_idx, formula, self.fmt_label_border)
-
-        # First projected year (4th data column): references assumptions
-        self.ws.write(start_row + 2, start_col + 9, '=Assumptions!A1', self.fmt_label_border)
-
-        # Remaining projected years: each references previous column + 1
-        for col_idx in range(start_col + 10, end_proj):
-            prev_col_letter = chr(ord('A') + col_idx - 1)
-            formula = f'={prev_col_letter}{year_row}+1'
-            self.ws.write(start_row + 2, col_idx, formula, self.fmt_label_border)
+        # Write year headers (historical and projected)
+        write_year_headers(self, start_row, start_col, end_proj)
 
         # Dotted border separators across data columns
         # Offsets from start_row: 9, 14, 19, 24, 29, 32
@@ -190,8 +133,8 @@ class SummarySheetBuilder:
         # Write summary content (income statement and valuation summary)
         write_summary_content(self, start_row, start_col, end_proj)
 
-        # Draw border box around content
-        draw_border_box(self, start_row, start_col, end_proj)
+        # Draw border box around content (closing border only on left side)
+        draw_border_box(self, start_row, start_col, end_proj, draw_closing_border=(start_col == 1))
 
         return start_row + 40  # +40 for content rows (39) + blank gap (1)
 
