@@ -211,3 +211,49 @@ def write_year_headers(builder, start_row: int, start_col: int, end_proj: int) -
         prev_col_letter = index_to_column(col_idx - 1)
         formula = f'={prev_col_letter}{year_row}+1'
         ws.write(start_row + 2, col_idx, formula, builder.fmt_label_border)
+
+
+def adjust_column_widths(builder, start_col: int, end_proj: int) -> None:
+    """Adjust column widths for the content section.
+
+    Args:
+        builder: SummarySheetBuilder instance with ws attribute
+        start_col: Starting column index (0-based, where B=1)
+        end_proj: Column index where projected data ends
+    """
+    ws = builder.ws
+
+    # Adjust column widths based on start_col
+    col_widths = {}
+    col_widths[index_to_column(start_col)] = 4      # B equivalent (or offset from start_col)
+    col_widths[index_to_column(start_col + 1)] = 1  # C equivalent
+    col_widths[index_to_column(start_col + 2)] = 1  # D equivalent
+    col_widths[index_to_column(start_col + 3)] = 20  # E equivalent
+    col_widths[index_to_column(start_col + 5)] = 1  # G equivalent
+
+    # Right side columns based on end_proj
+    right_cols = [index_to_column(end_proj + i) for i in range(5)]
+    col_widths[right_cols[0]] = 1   # U equivalent
+    col_widths[right_cols[1]] = 10  # V equivalent
+    col_widths[right_cols[4]] = 1   # Y equivalent (5th column)
+
+    for col, width in col_widths.items():
+        ws.set_column(col + ':' + col, width)
+
+
+def adjust_row_heights(builder, start_row: int) -> None:
+    """Adjust row heights for the content section.
+
+    Args:
+        builder: SummarySheetBuilder instance with ws attribute
+        start_row: Starting row index (0-based)
+    """
+    ws = builder.ws
+
+    # Set row heights for content section
+    row_heights_offsets = {
+        3: 3, 4: 3, 6: 3, 9: 3, 10: 3, 14: 3, 15: 3, 19: 3,
+        20: 3, 24: 3, 25: 3, 29: 3, 30: 3, 32: 3, 33: 3, 37: 3,
+    }
+    for offset, height in row_heights_offsets.items():
+        ws.set_row(start_row + offset, height)

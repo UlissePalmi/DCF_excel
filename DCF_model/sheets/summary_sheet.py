@@ -3,7 +3,7 @@ Summary sheet builder - creates key metrics summary page.
 """
 
 import xlsxwriter
-from .summary_formats import create_summary_formats, draw_border_box, write_summary_content, write_year_headers, index_to_column
+from .summary_formats import create_summary_formats, draw_border_box, write_summary_content, write_year_headers, adjust_column_widths, adjust_row_heights
 from structures.structures import write_header
 
 class SummarySheetBuilder:
@@ -19,7 +19,7 @@ class SummarySheetBuilder:
         """Create and populate the Summary sheet with 3 header/content pairs."""
         self.ws = self.workbook.add_worksheet("Summary")
         self.ws.hide_gridlines(2)
-        self._setup_layout()
+        self.ws.set_column('A:A', 2)
         self._load_formats()
 
         row = 0
@@ -40,11 +40,6 @@ class SummarySheetBuilder:
         # Third header/content pair
         row = self._write_header(start_row=row, subtitle='Worse Case DCF')
         row = self._write_content(start_row=row, section_title='WORSE CASE')
-
-    def _setup_layout(self) -> None:
-        """Apply custom column widths based on dynamic column layout."""
-        # Set column A width (hardcoded, applies to entire sheet)
-        self.ws.set_column('A:A', 2)
 
     def _load_formats(self) -> None:
         """Load format objects from summary_formats module."""
@@ -88,32 +83,12 @@ class SummarySheetBuilder:
         """
         end_proj = start_col + self.num_projected_years + 9
 
+        # Adjust row heights (for all content sections)
+        adjust_row_heights(self, start_row)
+
         # Adjust column widths (only for initial calls)
         if adj_col_widths:
-            col_widths = {}
-            # Set column widths based on start_col
-            col_widths[index_to_column(start_col)] = 4      # B equivalent (or offset from start_col)
-            col_widths[index_to_column(start_col + 1)] = 1  # C equivalent
-            col_widths[index_to_column(start_col + 2)] = 1  # D equivalent
-            col_widths[index_to_column(start_col + 3)] = 20  # E equivalent
-            col_widths[index_to_column(start_col + 5)] = 1  # G equivalent
-
-            # Right side columns based on end_proj
-            right_cols = [index_to_column(end_proj + i) for i in range(5)]
-            col_widths[right_cols[0]] = 1   # U equivalent
-            col_widths[right_cols[1]] = 10  # V equivalent
-            col_widths[right_cols[4]] = 1   # Y equivalent (5th column)
-
-            for col, width in col_widths.items():
-                self.ws.set_column(col + ':' + col, width)
-
-        # Set row heights for content section
-        row_heights_offsets = {
-            3: 3, 4: 3, 6: 3, 9: 3, 10: 3, 14: 3, 15: 3, 19: 3,
-            20: 3, 24: 3, 25: 3, 29: 3, 30: 3, 32: 3, 33: 3, 37: 3,
-        }
-        for offset, height in row_heights_offsets.items():
-            self.ws.set_row(start_row + offset, height)
+            adjust_column_widths(self, start_col, end_proj)
 
         # Section header
         self.ws.write(start_row, start_col + 1, f"SUMMARY VALUES - {section_title}", self.fmt_section)
